@@ -1,16 +1,13 @@
-# This is a sample Python script.
+from bet_strategy import BetStrategy
+from dealer import Game
+from player import Player
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+if __name__ == "__main__":
+    game = Game(amount_of_decks=5, rounds=1)
+    player = Player(start_balance=1000, bet_strategy=BetStrategy.BET_2_1_3)
 
+    game.registered_players.append(player)
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+    game.play_round()
 
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    pass
