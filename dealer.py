@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import List
 
@@ -15,6 +16,7 @@ class Game:
         self.rounds = rounds
         self.registered_players: List[Player] = list()
         self.shuffle()
+        self.played_hands = 0
 
     def shuffle(self):
         self.deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11] * 4 * self.amount_of_decks
@@ -24,9 +26,21 @@ class Game:
     def deal_card(self):
         return self.deck.pop()
 
-    def play_round(self):
-        print("====Starting New Hand====")
-        hands = [Hand(player, player.place_bet()) for player in self.registered_players]
+    def play_round(self) -> bool:
+        self.played_hands += 1
+        logging.debug("====Starting New Hand====")
+        hands: List[Hand] = list()
+        for player in self.registered_players:
+            bet = player.place_bet()
+            if bet == 0:
+                # Player has no more money!
+                self.registered_players.remove(player)
+                continue
+            hands.append(Hand(player, bet))
+
+        if not self.registered_players:
+            logging.debug("All players finished!")
+            return True
 
         for hand in hands:
             hand.add_card(self.deal_card())
@@ -54,7 +68,7 @@ class Game:
             decision = None
             while decision != BetAction.STAND and not hand.is_bust():
                 decision = hand.player.play_hand(hand=hand, dealer_card=dealer_hand.cards[0])
-                print(f"Player chose: {decision}")
+                logging.debug(f"Player chose: {decision}")
 
                 if decision == BetAction.STAND:
                     break
@@ -63,14 +77,14 @@ class Game:
                     hand.add_card(self.deal_card())
 
                 if decision == BetAction.SPLIT:
-                    print("Should split but skipping for now")
+                    logging.debug("Should split but skipping for now")
                     break
 
                 if decision == BetAction.DOUBLE:
                     hand.add_card(self.deal_card())
                     hand.bet_amount *= 2
-                    print(f"Player doubled ! Only one card!")
-                    print(f"{hand}")
+                    logging.debug(f"Player doubled ! Only one card!")
+                    logging.debug(f"{hand}")
                     break
 
         # All hands finished playing
@@ -86,15 +100,15 @@ class Game:
             self.shuffle()
 
     def finish_round(self, dealer_hand: Hand, player_hands: List[Hand]):
-        print("====Finishing Hand====")
-        print(f"Dealer hand: {dealer_hand}")
+        logging.debug("====Finishing Hand====")
+        logging.debug(f"Dealer hand: {dealer_hand}")
 
         for hand in player_hands:
-            print(f"Player hand: {hand}")
+            logging.debug(f"Player hand: {hand}")
 
             if hand.is_bust():
                 # Player busted
-                print("Player Busted")
+                logging.debug("Player Busted")
                 hand.player.balance -= hand.bet_amount
                 continue
 
@@ -104,43 +118,43 @@ class Game:
             if hand.is_blackjack():
                 if dealer_hand.is_blackjack():
                     # Player push
-                    print("Player and dealer both blackjack pushed")
+                    logging.debug("Player and dealer both blackjack pushed")
                     hand.player.balance += 0
                     continue
 
                 # Player wins 3 to 2
-                print("Player won blackjack")
+                logging.debug("Player won blackjack")
                 hand.player.balance += hand.bet_amount + hand.bet_amount * 1.5
                 continue
 
             if dealer_hand.is_bust():
                 # Dealer busted, award
-                print("Dealer busted")
+                logging.debug("Dealer busted")
                 hand.player.balance += hand.bet_amount
                 continue
 
             if hand.sum() == dealer_hand.sum():
                 if not dealer_hand.is_blackjack():
-                    print("Player pushed")
+                    logging.debug("Player pushed")
                     # Dummy placeholder just to kick things
                     hand.player.balance += 0
                     continue
 
                 # Player lost
-                print("Player lost")
+                logging.debug("Player lost")
                 hand.player.balance -= hand.bet_amount
 
             if hand.sum() > dealer_hand.sum():
-                print("Player won")
+                logging.debug("Player won")
                 hand.player.balance += hand.bet_amount
                 continue
 
             # Player lost
-            print("Player lost")
+            logging.debug("Player lost")
             hand.player.balance -= hand.bet_amount
 
-        print(f"Round finished!")
+        logging.debug(f"Round finished!")
 
 
 if __name__ == "__main__":
-    print(Game().shuffle())
+    logging.debug(Game().shuffle())

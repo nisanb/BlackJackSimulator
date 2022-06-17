@@ -1,3 +1,5 @@
+import logging
+
 import simple_strategy
 from bet_strategy import BetStrategy
 from hand import Hand
@@ -10,6 +12,9 @@ class Player:
         self.bet_strategy = bet_strategy
         self.last_bet = None
         self.recent_win = False
+        self.hands_won = 0
+        self.hands_lost = 0
+        self.hands_push = 0
 
     def place_bet(self) -> int:
         if self.bet_strategy == BetStrategy.BET_2_1_3:
@@ -28,7 +33,9 @@ class Player:
                 else:
                     bet = self.last_bet + 5
 
-            # print(f"Player is betting amount {bet} (last bet: {self.last_bet} won: {self.recent_win})")
+            # logging.debug(f"Player is betting amount {bet} (last bet: {self.last_bet} won: {self.recent_win})")
+            if bet > self.balance:
+                return 0
 
             self.last_bet = bet
 
@@ -44,18 +51,21 @@ class Player:
     @balance.setter
     def balance(self, new_balance):
         if new_balance > self._balance:
+            self.hands_won += 1
             self.recent_win = True
         elif new_balance < self._balance:
+            self.hands_lost += 1
             self.recent_win = False
         else:
             # Do nothing since we want to keep the last recent win state in a push
+            self.hands_push += 1
             pass
 
         self._balance = new_balance
-        print(f"New player balance is {self._balance}")
+        logging.debug(f"New player balance is {self._balance}")
 
     def play_hand(self, hand: Hand, dealer_card: int) -> BetAction:
-        print(f"Player is playing hand {hand} against dealer {dealer_card}")
+        logging.debug(f"Player is playing hand {hand} against dealer {dealer_card}")
         if hand.is_splittable():
             if simple_strategy.SIMPLE_STRATEGY[simple_strategy.StrategyIndex.SPLIT][hand.cards[0]][dealer_card]:
                 return simple_strategy.BetAction.SPLIT
