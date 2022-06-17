@@ -8,6 +8,7 @@ if __name__ == "__main__":
 
     game.registered_players.append(player)
 
-    game.play_round()
+    for _ in range(10000):
+        game.play_round()
 
     pass

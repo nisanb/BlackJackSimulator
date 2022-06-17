@@ -25,28 +25,36 @@ class Game:
         return self.deck.pop()
 
     def play_round(self):
-
-        hands = [Hand(player) for player in self.registered_players]
-
-        for hand in hands:
-            hand.add_card(self.deal_card())
-
-        dealer1 = self.deal_card()
+        print("====Starting New Hand====")
+        hands = [Hand(player, player.place_bet()) for player in self.registered_players]
 
         for hand in hands:
             hand.add_card(self.deal_card())
 
-        dealer2 = self.deal_card()
+        dealer_hand = Hand()
+        dealer_hand.add_card(self.deal_card())
 
         for hand in hands:
-            print(f"Player is playing hand: {hand}")
+            hand.add_card(self.deal_card())
+
+        dealer_hand.add_card(self.deal_card())
+
+        # Override scenario
+        # dealer_hand = Hand()
+        # dealer_hand.add_card(2)
+        # dealer_hand.add_card(3)
+        # hands = [Hand(self.registered_players[0], 10)]
+        # hands[0].add_card(6)
+        # hands[0].add_card(11)
+
+        for hand in hands:
             if hand.is_blackjack():
                 continue
 
             decision = None
             while decision != BetAction.STAND and not hand.is_bust():
-                decision = hand.player.play_hand(hand=hand, dealer_card=dealer1)
-                print(decision)
+                decision = hand.player.play_hand(hand=hand, dealer_card=dealer_hand.cards[0])
+                print(f"Player chose: {decision}")
 
                 if decision == BetAction.STAND:
                     break
@@ -60,13 +68,78 @@ class Game:
 
                 if decision == BetAction.DOUBLE:
                     hand.add_card(self.deal_card())
+                    hand.bet_amount *= 2
                     print(f"Player doubled ! Only one card!")
                     print(f"{hand}")
                     break
 
+        # All hands finished playing
+        # Deal to the dealer
+        # Dealer stops on soft 17
+        while dealer_hand.sum() < 17:
+            dealer_hand.add_card(self.deal_card())
+
+        self.finish_round(dealer_hand=dealer_hand, player_hands=hands)
+
         if len(self.deck) > self.red_card:
             # Dealer should shuffle
             self.shuffle()
+
+    def finish_round(self, dealer_hand: Hand, player_hands: List[Hand]):
+        print("====Finishing Hand====")
+        print(f"Dealer hand: {dealer_hand}")
+
+        for hand in player_hands:
+            print(f"Player hand: {hand}")
+
+            if hand.is_bust():
+                # Player busted
+                print("Player Busted")
+                hand.player.balance -= hand.bet_amount
+                continue
+
+                # With soft hand, we will alter the hand sum
+                hand.cards.append(-11)
+
+            if hand.is_blackjack():
+                if dealer_hand.is_blackjack():
+                    # Player push
+                    print("Player and dealer both blackjack pushed")
+                    hand.player.balance += 0
+                    continue
+
+                # Player wins 3 to 2
+                print("Player won blackjack")
+                hand.player.balance += hand.bet_amount + hand.bet_amount * 1.5
+                continue
+
+            if dealer_hand.is_bust():
+                # Dealer busted, award
+                print("Dealer busted")
+                hand.player.balance += hand.bet_amount
+                continue
+
+            if hand.sum() == dealer_hand.sum():
+                if not dealer_hand.is_blackjack():
+                    print("Player pushed")
+                    # Dummy placeholder just to kick things
+                    hand.player.balance += 0
+                    continue
+
+                # Player lost
+                print("Player lost")
+                hand.player.balance -= hand.bet_amount
+
+            if hand.sum() > dealer_hand.sum():
+                print("Player won")
+                hand.player.balance += hand.bet_amount
+                continue
+
+            # Player lost
+            print("Player lost")
+            hand.player.balance -= hand.bet_amount
+
+        print(f"Round finished!")
 
 
 if __name__ == "__main__":
