@@ -9,7 +9,7 @@ from simple_strategy import BetAction
 
 class Game:
     def __init__(self, amount_of_decks: int = 5, rounds: int = 1):
-        self.amount_of_decks = 5
+        self.amount_of_decks = amount_of_decks
         self.deck = []
         self.hands = []
         self.red_card: int = None
@@ -27,6 +27,9 @@ class Game:
         return self.deck.pop()
 
     def play_round(self) -> bool:
+        if self.played_hands >= self.rounds:
+            # Game Finished
+            return True
         self.played_hands += 1
         logging.debug("====Starting New Hand====")
         hands: List[Hand] = list()
@@ -54,19 +57,24 @@ class Game:
         dealer_hand.add_card(self.deal_card())
 
         # Override scenario
-        # dealer_hand = Hand()
-        # dealer_hand.add_card(2)
-        # dealer_hand.add_card(3)
-        # hands = [Hand(self.registered_players[0], 10)]
-        # hands[0].add_card(6)
-        # hands[0].add_card(11)
+        dealer_hand = Hand()
+        dealer_hand.add_card(5)
+        dealer_hand.add_card(10)
+        hands = [Hand(self.registered_players[0], 10)]
+        hands[0].add_card(8)
+        hands[0].add_card(8)
 
-        for hand in hands:
-            if hand.is_blackjack():
-                continue
+        played_hands: List[Hand] = list()
 
+        while hands:
+            hand = hands.pop(0)
+
+            split_hand = False
             decision = None
             while decision != BetAction.STAND and not hand.is_bust():
+                if hand.is_blackjack():
+                    continue
+
                 decision = hand.player.play_hand(hand=hand, dealer_card=dealer_hand.cards[0])
                 logging.debug(f"Player chose: {decision}")
 
@@ -77,7 +85,14 @@ class Game:
                     hand.add_card(self.deal_card())
 
                 if decision == BetAction.SPLIT:
-                    logging.debug("Should split but skipping for now")
+                    # Remove the hand
+                    split_hand = True
+                    splitted_card = hand.cards[0]
+                    for i in range(2):
+                        hand = Hand(player=hand.player, bet_amount=hand.bet_amount)
+                        hand.add_card(splitted_card)
+                        hand.add_card(self.deal_card())
+                        hands.insert(0, hand)
                     break
 
                 if decision == BetAction.DOUBLE:
@@ -87,13 +102,16 @@ class Game:
                     logging.debug(f"{hand}")
                     break
 
+            if not split_hand:
+                played_hands.append(hand)
+
         # All hands finished playing
         # Deal to the dealer
         # Dealer stops on soft 17
         while dealer_hand.sum() < 17:
             dealer_hand.add_card(self.deal_card())
 
-        self.finish_round(dealer_hand=dealer_hand, player_hands=hands)
+        self.finish_round(dealer_hand=dealer_hand, player_hands=played_hands)
 
         if len(self.deck) > self.red_card:
             # Dealer should shuffle
