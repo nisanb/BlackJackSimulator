@@ -33,7 +33,7 @@ class Player:
                 else:
                     bet = self.last_bet + 5
 
-            # logging.debug(f"Player is betting amount {bet} (last bet: {self.last_bet} won: {self.recent_win})")
+            # logging.info(f"Player is betting amount {bet} (last bet: {self.last_bet} won: {self.recent_win})")
             if bet > self.balance:
                 return 0
 
@@ -62,10 +62,10 @@ class Player:
             pass
 
         self._balance = new_balance
-        logging.debug(f"New player balance is {self._balance}")
+        logging.info(f"New player balance is {self._balance}")
 
     def play_hand(self, hand: Hand, dealer_card: int) -> BetAction:
-        logging.debug(f"Player is playing hand {hand} against dealer {dealer_card}")
+        logging.info(f"Player is playing hand {hand} against dealer {dealer_card}")
         if hand.is_splittable():
             if simple_strategy.SIMPLE_STRATEGY[simple_strategy.StrategyIndex.SPLIT][hand.cards[0]][dealer_card]:
                 return simple_strategy.BetAction.SPLIT

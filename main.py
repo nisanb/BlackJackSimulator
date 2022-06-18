@@ -9,7 +9,7 @@ from player import Player
 
 
 def _set_logging():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     matplotlib.set_loglevel("info")
 
 
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     data_plot = plt.plot(0, 0)
     line, = axes.plot([], [])
 
-    game = Game(amount_of_decks=5, rounds=1)
+    game = Game(amount_of_decks=5, rounds=50000)
     player = Player(start_balance=3000, bet_strategy=BetStrategy.BET_2_1_3)
 
     game.registered_players.append(player)
@@ -43,5 +43,5 @@ if __name__ == "__main__":
         pass
 
     plt.show(block=True)
-    logging.debug(f"Game finished at hand #{game.played_hands}")
+    logging.info(f"Game finished at hand #{game.played_hands}")
 
